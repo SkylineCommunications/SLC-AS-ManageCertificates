@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+		<CodeAnalysisRuleSet>..\Internal\Code Analysis\qaction-debug.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<DebugType>pdbonly</DebugType>
+		<CodeAnalysisRuleSet>..\Internal\Code Analysis\qaction-release.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<PropertyGroup>
+		<DefineConstants>$(DefineConstants);DCFv1;DBInfo;ALARM_SQUASHING</DefineConstants>
+	</PropertyGroup>
+	<ProjectExtensions>
+	    <VisualStudio>
+		    <UserProperties DisLinkedXmlFile="..\ManageCertificates.xml" DisProjectType="automationScriptProject" DisLinkId="1" />
+        </VisualStudio>
+	</ProjectExtensions>
+	<ItemGroup>
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	  <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
+	  <PackageReference Include="Skyline.DataMiner.Dev.Automation" Version="10.3.8" />
+	  <PackageReference Include="Skyline.DataMiner.Utils.Certificates" Version="1.0.0-1.0.0.X.11" />
+	  <PackageReference Include="Skyline.DataMiner.Utils.InteractiveAutomationScriptToolkit" Version="6.1.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Certificates\Certificates.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Exceptions\" />
+	</ItemGroup>
+</Project>
