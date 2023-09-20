@@ -27,9 +27,6 @@
 	  <PackageReference Include="Skyline.DataMiner.Utils.InteractiveAutomationScriptToolkit" Version="6.1.0" />
 	</ItemGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Certificates\Certificates.csproj" />
-	</ItemGroup>
-	<ItemGroup>
 	  <Folder Include="Exceptions\" />
 	</ItemGroup>
 </Project>
