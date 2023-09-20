@@ -207,5 +207,12 @@
 
 			return s.Substring(startIndex, endIndex - startIndex);
 		}
+
+		internal static string GetFolderName(string s)
+		{
+			var startIndex = s.LastIndexOf('\\') + 1;
+
+			return s.Substring(startIndex);
+		}
 	}
 }

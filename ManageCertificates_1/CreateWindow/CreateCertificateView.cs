@@ -104,11 +104,11 @@
 
 			AddWidget(GetHeader("---Extensions---"), row++, 0, 1, 3);
 			IPAddress = GetTextBox();
-			AddWidget(GetHeader("IP Address"), row++, 0, 1, 3);
+			AddWidget(GetHeader("IP Address (optional)"), row++, 0, 1, 3);
 			AddWidget(IPAddress, row++, 0, 1, 3);
 
 			DNSNames = GetTextBox();
-			AddWidget(GetHeader("DNS Names (space separated)"), row++, 0, 1, 3);
+			AddWidget(GetHeader("DNS Names (space separated, optional)"), row++, 0, 1, 3);
 			AddWidget(DNSNames, row++, 0, 1, 3);
 
 			AddWidget(CreateButton, row++, 2);

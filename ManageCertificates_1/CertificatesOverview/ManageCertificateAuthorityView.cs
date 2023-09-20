@@ -10,7 +10,7 @@
 
 	internal class ManageCertificateAuthorityView : Dialog
 	{
-		private readonly string[] headers = { "DistinguishedName", "Validity" };
+		private readonly string[] headers = { "CA Name", "DistinguishedName", "Validity" };
 
 		public ManageCertificateAuthorityView(IEngine engine) : base(engine)
 		{
@@ -74,6 +74,7 @@
 			{
 				tableRows[certificate.Key] = new Widget[]
 				{
+					new Label(CommonActions.GetFolderName(certificate.Key)),
 					new Label(certificate.Value.CertificateInfo.DistinguishedName),
 					new Label(certificate.Value.CertificateFile.NotAfter.ToString()),
 				};

@@ -109,6 +109,19 @@ namespace ManageCertificates_1
 					controller.ShowDialog(manageCertificateView);
 				};
 
+				TrustCAHelpView trustCAHelpView = new TrustCAHelpView(engine);
+
+				manageCertificateAuthorityController.Trust += (sender, args) =>
+				{
+					controller.ShowDialog(trustCAHelpView);
+				};
+
+				trustCAHelpView.Okay += (sender, args) =>
+				{
+					manageCertificateController.Initialize();
+					controller.ShowDialog(manageCertificateAuthorityView);
+				};
+
 				controller.Run(certificateManagerMenuView);
 			}
 			catch (ScriptAbortException ex)

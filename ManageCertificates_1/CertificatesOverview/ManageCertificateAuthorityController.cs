@@ -31,6 +31,8 @@
 
 		internal event EventHandler<EventArgs> Create;
 
+		internal event EventHandler<EventArgs> Trust;
+
 		public void Initialize()
 		{
 			certificates = CommonActions.GetRootCertificates(folderPath);
@@ -63,19 +65,21 @@
 
 		private void OnTrustButtonPressed(object sender, EventArgs e)
 		{
-			var folders = view.GetSelectedCertificates();
+			//var folders = view.GetSelectedCertificates();
+			//X509Store store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+			//store.Open(OpenFlags.ReadWrite);
 
-			foreach (var folder in folders)
-			{
-				var crt = Directory.GetFiles(folder).First(x => x.EndsWith(".crt"));
+			//foreach (var folder in folders)
+			//{
+			//	var crt = Directory.GetFiles(folder).First(x => x.EndsWith(".crt"));
 
-				var cert = new X509Certificate2(crt);
-				using (X509Store store = new X509Store(StoreName.Root, StoreLocation.LocalMachine))
-				{
-					store.Open(OpenFlags.ReadWrite);
-					store.Add(cert);
-				}
-			}
+			//	var cert = new X509Certificate2(crt);
+			//	store.Add(cert);
+			//}
+
+			//store.Close();
+
+			Trust?.Invoke(this, EventArgs.Empty);
 		}
 	}
 }
