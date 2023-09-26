@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
+	using System.Text.RegularExpressions;
 
 	using ManageCertificates_1;
 	using ManageCertificates_1.Models;
@@ -19,6 +20,7 @@
 		private readonly string scFolderPath;
 		private readonly CertificateClusterModel model;
 		private Dictionary<string, ICertificate> rootCertificates;
+		private readonly Regex passwordRegex = new Regex("[A-Za-z0-9]{6,}", RegexOptions.IgnoreCase);
 
 		public CreateCertificateController(IEngine engine, CreateCertificateView view, string caFolderPath, string scFolderPath, CertificateClusterModel model)
 		{
@@ -55,12 +57,6 @@
 
 		public void OnCreateButtonPressed(object sender, EventArgs e)
 		{
-			if (Directory.Exists(scFolderPath + $"\\{view.CertificateName.Text}"))
-			{
-				view.SetFeedback("Cert already exists, please delete the existing one before creating a new one.");
-				return;
-			}
-
 			var commonName = view.CommonName.Text;
 			var organization = view.Organization.Text;
 			var organizationalUnit = view.OrganizationalUnit.Text;
@@ -72,6 +68,18 @@
 			var dnsNames = view.DNSNames.Text.Split(' ');
 			var certificateName = view.CertificateName.Text;
 			var certificateInfo = new CertificateModel(commonName, organization, organizationalUnit, country, validity, keySize, password, ipAddress, dnsNames, certificateName);
+
+			if (Directory.Exists(scFolderPath + $"\\{commonName}"))
+			{
+				view.SetFeedback("Cert already exists, please delete the existing one before creating a new one.");
+				return;
+			}
+
+			if (!passwordRegex.IsMatch(password))
+			{
+				view.SetFeedback("Password should be alphanumeric and contain at least 6 characters.");
+				return;
+			}
 
 			if (view.CertificateAuthorities.Selected.Equals("None"))
 			{

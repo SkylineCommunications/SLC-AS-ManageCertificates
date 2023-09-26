@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.IO;
+	using System.Text.RegularExpressions;
 
 	using ManageCertificates_1;
 	using ManageCertificates_1.Models;
@@ -14,6 +15,7 @@
 		private readonly IEngine engine;
 		private readonly string folderPath;
 		private readonly CertificateClusterModel model;
+		private readonly Regex passwordRegex = new Regex("[A-Za-z0-9]{6,}", RegexOptions.IgnoreCase);
 
 		public CreateCertificateAuthorityController(IEngine engine, CreateCertificateAuthorityView view, string folderPath, CertificateClusterModel model)
 		{
@@ -41,16 +43,24 @@
 
 		public void OnCreateButtonPressed(object sender, EventArgs e)
 		{
-			if (Directory.Exists(folderPath + $"\\{view.CommonName.Text}"))
+			var commonName = view.CommonName.Text;
+			var password = view.Password.Password;
+
+			if (Directory.Exists(folderPath + $"\\{commonName}"))
 			{
 				view.SetFeedback("CA already exists, please delete the existing one before creating a new one.");
 				return;
 			}
 
+			if (!passwordRegex.IsMatch(password))
+			{
+				view.SetFeedback("Password should be alphanumeric and contain at least 6 characters.");
+				return;
+			}
+
 			UpdateModel();
 
-			var commonName = view.CommonName.Text;
-			var password = view.Password.Password;
+
 			var certificateInfo = new CertificateModel(commonName, model, password);
 
 			bool success = CreateRootCA(certificateInfo);
