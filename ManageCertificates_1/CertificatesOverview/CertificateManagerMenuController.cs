@@ -16,6 +16,7 @@
 			this.view.FinishButton.Pressed += OnNextButtonPressed;
 			this.view.CertificateAuthorityButton.Pressed += OnCAButtonPressed;
 			this.view.SignedCertificateButton.Pressed += OnSCButtonPressed;
+			this.view.UploadCertificatesButton.Pressed += OnUploadButtonPressed;
 		}
 
 		internal event EventHandler<EventArgs> ManageCertificateAuthority;
@@ -23,6 +24,8 @@
 		internal event EventHandler<EventArgs> ManageSignedCertificate;
 
 		internal event EventHandler<EventArgs> Finish;
+
+		internal event EventHandler<EventArgs> Upload;
 
 		public void Initialize()
 		{
@@ -42,6 +45,11 @@
 		private void OnNextButtonPressed(object sender, EventArgs e)
 		{
 			Finish?.Invoke(this, EventArgs.Empty);
+		}
+
+		private void OnUploadButtonPressed(object sender, EventArgs e)
+		{
+			Upload?.Invoke(this, EventArgs.Empty);
 		}
 	}
 }

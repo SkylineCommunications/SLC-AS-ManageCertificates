@@ -37,7 +37,8 @@
 
 		public void Initialize()
 		{
-			rootCertificates = CommonActions.GetRootCertificates(caFolderPath).ToDictionary(x => x.Value.CertificateInfo.DistinguishedName, x => x.Value);
+			
+			rootCertificates = CommonActions.GetRootCertificates(caFolderPath).ToDictionary(x => GetFolderName(x.Key), x => x.Value);
 
 			view.Initialize(rootCertificates);
 			view.CertificateAuthorities.Changed += OnCertificateAuthorityChanged;
@@ -161,6 +162,11 @@
 			view.CommonName.Text = model.CommonName;
 			view.Validity.Text = model.Validity == 0 ? string.Empty : model.Validity.ToString();
 			view.KeySize.Text = model.KeySize == 0 ? string.Empty : model.KeySize.ToString();
+		}
+
+		private string GetFolderName(string path)
+		{
+			return path.Substring(path.LastIndexOf("\\") + 1);
 		}
 	}
 }

@@ -20,6 +20,7 @@
 			FinishButton = new Button("Finish");
 			CertificateAuthorityButton = new Button("Manage CAs") { Width = 180 };
 			SignedCertificateButton = new Button("Manage Signed Certs") { Width = 180 };
+			UploadCertificatesButton = new Button("Upload Certs") { Width = 180 };
 		}
 
 		public Button FinishButton { get; set; }
@@ -28,6 +29,8 @@
 
 		public Button SignedCertificateButton { get; set; }
 
+		public Button UploadCertificatesButton { get; set; }
+
 		public void Initialize()
 		{
 			Clear();
@@ -35,6 +38,7 @@
 			int row = 0;
 			AddWidget(CertificateAuthorityButton, row++, 0, 1, 3);
 			AddWidget(SignedCertificateButton, row++, 0, 1, 3);
+			AddWidget(UploadCertificatesButton, row++, 0, 1, 3);
 			AddWidget(FinishButton, row++, 0, 1, 3);
 		}
 	}

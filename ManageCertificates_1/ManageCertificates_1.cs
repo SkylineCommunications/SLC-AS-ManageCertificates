@@ -54,11 +54,20 @@ namespace ManageCertificates_1
 				CreateCertificateView createCertificateView = new CreateCertificateView(engine);
 				CreateCertificateController createCertificateController = new CreateCertificateController(engine, createCertificateView, caFolderPath, scFolderPath, model);
 
+				UploadView uploadView = new UploadView(engine);
+				UploadController uploadController = new UploadController(engine, uploadView, caFolderPath, scFolderPath);
+
 				certificateManagerMenuController.Initialize();
 
 				certificateManagerMenuController.Finish += (sender, args) =>
 				{
 					engine.ExitSuccess("Manage Packages Completed.");
+				};
+
+				certificateManagerMenuController.Upload += (sender, args) =>
+				{
+					uploadController.Initialize();
+					controller.ShowDialog(uploadView);
 				};
 
 				certificateManagerMenuController.ManageCertificateAuthority += (sender, args) =>
@@ -120,6 +129,12 @@ namespace ManageCertificates_1
 				{
 					manageCertificateController.Initialize();
 					controller.ShowDialog(manageCertificateAuthorityView);
+				};
+
+				uploadController.Finish += (sender, args) =>
+				{
+					certificateManagerMenuController.Initialize();
+					controller.ShowDialog(certificateManagerMenuView);
 				};
 
 				controller.Run(certificateManagerMenuView);
