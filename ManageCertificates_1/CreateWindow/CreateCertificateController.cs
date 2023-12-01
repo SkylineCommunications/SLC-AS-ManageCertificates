@@ -103,7 +103,7 @@
 
 				CommonActions.CreateCertificate(this_folder, certificateModel);
 
-				view.SetFeedback("CA successfully created.");
+				view.SetFeedback("Signed certificate successfully created.");
 				return true;
 			}
 			catch (Exception e)

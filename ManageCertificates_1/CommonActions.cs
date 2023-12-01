@@ -115,7 +115,10 @@
 			{
 				foreach (var dnsName in certificateModel.DNSNames)
 				{
-					csrGenerator.AddExtension(X509Extensions.SubjectAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.DnsName, dnsName)));
+					if (!String.IsNullOrEmpty(dnsName))
+					{
+						csrGenerator.AddExtension(X509Extensions.SubjectAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.DnsName, dnsName)));
+					}
 				}
 			}
 
