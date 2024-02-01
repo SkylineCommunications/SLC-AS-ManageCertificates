@@ -13,14 +13,12 @@
 	{
 		private readonly ManageCertificateAuthorityView view;
 		private readonly IEngine engine;
-		private readonly string folderPath;
-		private Dictionary<string, ICertificate> certificates;
+		private Dictionary<string, ICertificate> _certAuthorities;
 
-		public ManageCertificateAuthorityController(IEngine engine, ManageCertificateAuthorityView view, string folderPath)
+		public ManageCertificateAuthorityController(IEngine engine, ManageCertificateAuthorityView view)
 		{
 			this.view = view;
 			this.engine = engine;
-			this.folderPath = folderPath;
 			view.FinishButton.Pressed += OnNextButtonPressed;
 			view.DeleteButton.Pressed += OnDeleteButtonPressed;
 			view.CreateButton.Pressed += OnCreateButtonPressed;
@@ -33,11 +31,19 @@
 
 		internal event EventHandler<EventArgs> Trust;
 
+		private Dictionary<string, ICertificate> CertAuthorities
+		{
+			get
+			{
+				_certAuthorities = _certAuthorities ?? CommonActions.GetCertificateAuthorities();
+				return _certAuthorities;
+			}
+		}
+
 		public void Initialize()
 		{
-			certificates = CommonActions.GetRootCertificates(folderPath);
-
-			view.Initialize(certificates);
+			_certAuthorities = null;
+			view.Initialize(CertAuthorities);
 		}
 
 		private void OnCreateButtonPressed(object sender, EventArgs e)

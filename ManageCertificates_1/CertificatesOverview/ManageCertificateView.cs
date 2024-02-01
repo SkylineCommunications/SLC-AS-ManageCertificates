@@ -10,17 +10,17 @@
 
 	internal class ManageCertificateView : Dialog
 	{
-		private readonly string[] headers = { "DistinguishedName", "Validity", "Issuer" };
+		private readonly string[] headers = { "CN", "DN", "Validity", "Issuer" };
 
 		public ManageCertificateView(IEngine engine) : base(engine)
 		{
 			Title = "Manage Certificates";
-			Width = 700;
-			Height = 450;
+			Width = 900;
 			SetColumnWidth(0, 50);
-			SetColumnWidth(1, 220);
-			SetColumnWidth(2, 160);
-			SetColumnWidth(3, 220);
+			SetColumnWidth(1, 160);
+			SetColumnWidth(2, 260);
+			SetColumnWidth(3, 160);
+			SetColumnWidth(4, 260);
 
 			FinishButton = new Button("Finish");
 			Certificates = new TableSelection(engine, headers);
@@ -41,21 +41,14 @@
 			Clear();
 			int row = 0;
 
-			if (Certificates != null)
-			{
-				Certificates.Clear();
-			}
-
 			// First Column
 			var tableRows = GetTableRows(certificates);
-			Certificates.Initialize(tableRows);
-			AddSection(Certificates, row, 0);
-			row += Certificates.RowCount;
+			Certificates.AddToDialog(this, tableRows, ref row);
 
-			AddWidget(DeleteButton, row, 2);
-			AddWidget(CreateButton, row++, 3, 1, 1, HorizontalAlignment.Right);
+			AddWidget(CreateButton, row++, 4, 1, 1, HorizontalAlignment.Right);
 			AddWidget(new Label(string.Empty), row++, 0);
-			AddWidget(FinishButton, row, 3, 1, 1, HorizontalAlignment.Right);
+			AddWidget(DeleteButton, row, 1);
+			AddWidget(FinishButton, row, 4, 1, 1, HorizontalAlignment.Right);
 		}
 
 		internal IEnumerable<string> GetSelectedCertificates()
@@ -70,9 +63,10 @@
 			{
 				tableRows[certificate.Key] = new Widget[]
 				{
-					new Label(certificate.Value.CertificateInfo.DistinguishedName),
-					new Label(certificate.Value.CertificateFile.NotAfter.ToString()),
-					new Label(certificate.Value.Issuer),
+					new Label(certificate.Value.Subject.CommonName){ Width = 150 },
+					new Label(certificate.Value.Subject.Value){ Width = 250 },
+					new Label(certificate.Value.CertificateFile.NotAfter.ToString("dd MMM yyyy")) { Width = 150 },
+					new Label(certificate.Value.Subject == certificate.Value.Issuer ? "Self-Signed" : certificate.Value.Issuer.Value){ Width = 250 },
 				};
 			}
 

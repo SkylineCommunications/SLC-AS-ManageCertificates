@@ -12,14 +12,12 @@
 	{
 		private readonly ManageCertificateView view;
 		private readonly IEngine engine;
-		private readonly string folderPath;
 		private Dictionary<string, ICertificate> certificates;
 
-		public ManageCertificateController(IEngine engine, ManageCertificateView view, string folderPath)
+		public ManageCertificateController(IEngine engine, ManageCertificateView view)
 		{
 			this.view = view;
 			this.engine = engine;
-			this.folderPath = folderPath;
 			view.FinishButton.Pressed += OnNextButtonPressed;
 			view.DeleteButton.Pressed += OnDeleteButtonPressed;
 			view.CreateButton.Pressed += OnCreateButtonPressed;
@@ -32,7 +30,7 @@
 		public void Initialize()
 		{
 			certificates = new Dictionary<string, ICertificate>();
-			foreach (string folder in Directory.GetDirectories(folderPath))
+			foreach (string folder in Directory.GetDirectories(CommonActions.ScFolderPath))
 			{
 				var folderName = folder.Substring(folder.LastIndexOf("\\") + 1);
 				try

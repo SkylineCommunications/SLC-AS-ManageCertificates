@@ -18,18 +18,12 @@
 	{
 		private readonly UploadView view;
 		private readonly IEngine engine;
-		private readonly string caFolderPath;
-		private readonly string scFolderPath;
-		private readonly CertificateClusterModel model;
-		private Dictionary<string, ICertificate> rootCertificates;
 		private readonly Regex usernameRegex = new Regex("[A-Za-z0-9]+", RegexOptions.IgnoreCase);
 
-		public UploadController(IEngine engine, UploadView view, string caFolderPath, string scFolderPath)
+		public UploadController(IEngine engine, UploadView view)
 		{
 			this.view = view;
 			this.engine = engine;
-			this.caFolderPath = caFolderPath;
-			this.scFolderPath = scFolderPath;
 			view.FinishButton.Pressed += OnFinishButtonPressed;
 			view.CrtUploadButton.Pressed += OnCrtUploadButtonPressed;
 			view.P12UploadButton.Pressed += OnP12UploadButtonPressed;
@@ -64,7 +58,7 @@
 			view.CrtUploadButton.IsEnabled = false;
 
 			var certName = view.CertName.Text;
-			var path = view.CertificateAuthority.IsChecked ? caFolderPath + "\\" + certName : scFolderPath + "\\" + certName;
+			var path = view.CertificateAuthority.IsChecked ? CommonActions.CaFolderPath + "\\" + certName : CommonActions.ScFolderPath + "\\" + certName;
 
 			UploadCrt(path);
 		}
@@ -75,7 +69,7 @@
 			view.P12UploadButton.IsEnabled = false;
 
 			var certName = view.CertName.Text;
-			var path = view.CertificateAuthority.IsChecked ? caFolderPath + "\\" + certName : scFolderPath + "\\" + certName;
+			var path = view.CertificateAuthority.IsChecked ? CommonActions.CaFolderPath + "\\" + certName : CommonActions.ScFolderPath + "\\" + certName;
 
 			UploadP12(path);
 		}
@@ -111,7 +105,7 @@
 		public bool Validate()
 		{
 			var certName = view.CertName.Text;
-			var path = view.CertificateAuthority.IsChecked ? caFolderPath + "\\" + certName : scFolderPath + "\\" + certName;
+			var path = view.CertificateAuthority.IsChecked ? CommonActions.CaFolderPath + "\\" + certName : CommonActions.ScFolderPath + "\\" + certName;
 
 			if (Directory.Exists(path))
 			{

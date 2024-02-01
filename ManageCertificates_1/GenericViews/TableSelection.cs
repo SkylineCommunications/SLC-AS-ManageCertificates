@@ -7,7 +7,7 @@
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
-	internal class TableSelection : Section
+	internal class TableSelection
 	{
 		private readonly IEngine engine;
 		private readonly string[] columns;
@@ -27,28 +27,27 @@
 			}
 		}
 
-		public void Initialize(Dictionary<string, Widget[]> rows)
+		public void AddToDialog(Dialog dialog, Dictionary<string, Widget[]> rows, ref int currentRow)
 		{
 			rowStatus = rows.Keys.ToDictionary(k => k, k => false);
-			var rowcount = 0;
 			for (int i = 0; i < columns.Length; i++)
 			{
-				AddWidget(new Label(columns[i]), rowcount, i + 1);
+				dialog.AddWidget(new Label(columns[i]), currentRow, i + 1);
 			}
 
-			rowcount++;
+			currentRow++;
 			foreach (var row in rows)
 			{
 				var checkbox = new CheckBox();
 				checkbox.Tooltip = row.Key;
 				checkbox.Changed += OnCheck;
-				AddWidget(checkbox, rowcount, 0);
+				dialog.AddWidget(checkbox, currentRow, 0);
 				for (int i = 0; i < row.Value.Length; i++)
 				{
-					AddWidget(row.Value[i], rowcount, i + 1);
+					dialog.AddWidget(row.Value[i], currentRow, i + 1);
 				}
 
-				rowcount++;
+				currentRow++;
 			}
 		}
 

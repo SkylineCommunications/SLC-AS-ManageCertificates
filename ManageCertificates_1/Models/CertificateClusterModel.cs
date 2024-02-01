@@ -60,7 +60,7 @@
 		/// <summary>
 		/// Gets or sets the key size of the certificate.
 		/// </summary>
-		[DefaultValue(4096)]
+		[DefaultValue(2048)]
 		[JsonProperty("keySize", DefaultValueHandling = DefaultValueHandling.Populate)]
 		public int KeySize { get; set; }
 
