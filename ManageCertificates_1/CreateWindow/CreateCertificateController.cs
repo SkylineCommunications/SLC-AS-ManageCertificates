@@ -121,10 +121,5 @@
 			view.Validity.Text = model.Validity == 0 ? string.Empty : model.Validity.ToString();
 			view.KeySize.Text = model.KeySize == 0 ? string.Empty : model.KeySize.ToString();
 		}
-
-		private string GetFolderName(string path)
-		{
-			return path.Substring(path.LastIndexOf("\\") + 1);
-		}
 	}
 }

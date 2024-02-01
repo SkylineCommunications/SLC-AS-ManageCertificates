@@ -7,7 +7,9 @@
 	internal class CertificateManagerMenuController
 	{
 		private readonly CertificateManagerMenuView view;
+#pragma warning disable S4487 // Unread "private" fields should be removed (for debugging purposes)
 		private readonly IEngine engine;
+#pragma warning restore S4487 // Unread "private" fields should be removed
 
 		public CertificateManagerMenuController(IEngine engine, CertificateManagerMenuView view)
 		{

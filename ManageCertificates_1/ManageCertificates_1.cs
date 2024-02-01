@@ -156,17 +156,11 @@ namespace ManageCertificates_1
 			}
 		}
 
-		private void ManageCertificateController_Finish(object sender, EventArgs e)
-		{
-			throw new NotImplementedException();
-		}
-
-		private CertificateClusterModel GetCertInfoModelFromInput(string input)
+		private static CertificateClusterModel GetCertInfoModelFromInput(string input)
 		{
 			try
 			{
 				var model = JsonConvert.DeserializeObject<CertificateClusterModel>(input);
-
 				return model;
 			}
 			catch (Exception)

@@ -71,20 +71,6 @@
 
 		private void OnTrustButtonPressed(object sender, EventArgs e)
 		{
-			//var folders = view.GetSelectedCertificates();
-			//X509Store store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
-			//store.Open(OpenFlags.ReadWrite);
-
-			//foreach (var folder in folders)
-			//{
-			//	var crt = Directory.GetFiles(folder).First(x => x.EndsWith(".crt"));
-
-			//	var cert = new X509Certificate2(crt);
-			//	store.Add(cert);
-			//}
-
-			//store.Close();
-
 			Trust?.Invoke(this, EventArgs.Empty);
 		}
 	}

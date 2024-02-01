@@ -12,7 +12,6 @@
 	{
 		private readonly ManageCertificateView view;
 		private readonly IEngine engine;
-		private Dictionary<string, ICertificate> certificates;
 
 		public ManageCertificateController(IEngine engine, ManageCertificateView view)
 		{
@@ -29,7 +28,7 @@
 
 		public void Initialize()
 		{
-			certificates = new Dictionary<string, ICertificate>();
+			var certificates = new Dictionary<string, ICertificate>();
 			foreach (string folder in Directory.GetDirectories(CommonActions.ScFolderPath))
 			{
 				var folderName = folder.Substring(folder.LastIndexOf("\\") + 1);

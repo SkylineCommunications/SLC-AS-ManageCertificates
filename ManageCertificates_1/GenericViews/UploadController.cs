@@ -1,24 +1,19 @@
 ﻿namespace ManageInstallPackages_1.CreateWindow
 {
 	using System;
-	using System.Collections.Generic;
 	using System.IO;
-	using System.Linq;
 	using System.Text.RegularExpressions;
 
 	using ManageCertificates_1;
-	using ManageCertificates_1.Models;
 	using ManageCertificates_1.View;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.Utils.Certificates;
-	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
 	internal class UploadController
 	{
-		private readonly UploadView view;
 		private readonly IEngine engine;
 		private readonly Regex usernameRegex = new Regex("[A-Za-z0-9]+", RegexOptions.IgnoreCase);
+		private readonly UploadView view;
 
 		public UploadController(IEngine engine, UploadView view)
 		{
@@ -33,16 +28,6 @@
 		internal event EventHandler<EventArgs> Finish;
 
 		public void Initialize()
-		{
-			view.Initialize();
-		}
-
-		public void OnFinishButtonPressed(object sender, EventArgs e)
-		{
-			Finish?.Invoke(this, EventArgs.Empty);
-		}
-
-		public void OnResetButtonPressed(object sender, EventArgs e)
 		{
 			view.Initialize();
 		}
@@ -63,6 +48,11 @@
 			UploadCrt(path);
 		}
 
+		public void OnFinishButtonPressed(object sender, EventArgs e)
+		{
+			Finish?.Invoke(this, EventArgs.Empty);
+		}
+
 		public void OnP12UploadButtonPressed(object sender, EventArgs e)
 		{
 			view.FinishButton.IsEnabled = true;
@@ -72,6 +62,11 @@
 			var path = view.CertificateAuthority.IsChecked ? CommonActions.CaFolderPath + "\\" + certName : CommonActions.ScFolderPath + "\\" + certName;
 
 			UploadP12(path);
+		}
+
+		public void OnResetButtonPressed(object sender, EventArgs e)
+		{
+			view.Initialize();
 		}
 
 		public void UploadCrt(string path)

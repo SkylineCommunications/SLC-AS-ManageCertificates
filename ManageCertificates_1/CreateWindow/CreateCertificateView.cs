@@ -1,4 +1,6 @@
-﻿namespace ManageInstallPackages_1.CreateWindow
+﻿// Ignore Spelling: Dns
+
+namespace ManageInstallPackages_1.CreateWindow
 {
 	using System.Collections.Generic;
 	using System.Linq;
@@ -47,7 +49,7 @@
 
 		public TextBox IPAddress { get; set; }
 
-		public TextBox DNSNames { get; set; }
+		public TextBox DnsNames { get; set; }
 
 		public PasswordBox Password { get; set; }
 
@@ -110,9 +112,9 @@
 			AddWidget(GetHeader("IP Address (optional)"), row++, 0, 1, 3);
 			AddWidget(IPAddress, row++, 0, 1, 3);
 
-			DNSNames = GetTextBox();
+			DnsNames = GetTextBox();
 			AddWidget(GetHeader("DNS Names (space separated, optional)"), row++, 0, 1, 3);
-			AddWidget(DNSNames, row++, 0, 1, 3);
+			AddWidget(DnsNames, row++, 0, 1, 3);
 
 			AddWidget(CreateButton, row++, 2);
 			AddWidget(FinishButton, row++, 2);

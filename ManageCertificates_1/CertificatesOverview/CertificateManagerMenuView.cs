@@ -39,7 +39,7 @@
 			AddWidget(CertificateAuthorityButton, row++, 0, 1, 3);
 			AddWidget(SignedCertificateButton, row++, 0, 1, 3);
 			AddWidget(UploadCertificatesButton, row++, 0, 1, 3);
-			AddWidget(FinishButton, row++, 0, 1, 3);
+			AddWidget(FinishButton, row, 0, 1, 3);
 		}
 	}
 }

@@ -2,7 +2,6 @@
 {
 	using System.ComponentModel;
 
-
 	using Newtonsoft.Json;
 
 	public class CertificateClusterModel
@@ -33,6 +32,19 @@
 		public string CommonName { get; set; }
 
 		/// <summary>
+		/// Gets or sets the country of the certificate.
+		/// </summary>
+		[JsonProperty("country", NullValueHandling = NullValueHandling.Ignore)]
+		public string Country { get; set; }
+
+		/// <summary>
+		/// Gets or sets the key size of the certificate.
+		/// </summary>
+		[DefaultValue(2048)]
+		[JsonProperty("keySize", DefaultValueHandling = DefaultValueHandling.Populate)]
+		public int KeySize { get; set; }
+
+		/// <summary>
 		/// Gets or sets the organization of the certificate.
 		/// </summary>
 		[JsonProperty("organization", NullValueHandling = NullValueHandling.Ignore)]
@@ -45,24 +57,11 @@
 		public string OrganizationalUnit { get; set; }
 
 		/// <summary>
-		/// Gets or sets the country of the certificate.
-		/// </summary>
-		[JsonProperty("country", NullValueHandling = NullValueHandling.Ignore)]
-		public string Country { get; set; }
-
-		/// <summary>
 		/// Gets or sets the validity period of the certificate.
 		/// </summary>
 		[DefaultValue(3650)]
 		[JsonProperty("validity", DefaultValueHandling = DefaultValueHandling.Populate)]
 		public int Validity { get; set; }
-
-		/// <summary>
-		/// Gets or sets the key size of the certificate.
-		/// </summary>
-		[DefaultValue(2048)]
-		[JsonProperty("keySize", DefaultValueHandling = DefaultValueHandling.Populate)]
-		public int KeySize { get; set; }
 
 		/// <summary>
 		/// Deserialize the string to an instance of <see cref="CertificateClusterModel"/>.
