@@ -9,7 +9,7 @@
 		{
 			Title = "Manage Certificates";
 			Width = 700;
-			Height = 450;
+			MinHeight = 600;
 			SetColumnWidth(0, 50);
 			SetColumnWidth(1, 110);
 			SetColumnWidth(2, 110);

@@ -20,7 +20,6 @@
 			this.ResetButton = new Button("Reset");
 
 			Width = 500;
-			Height = 700;
 			SetColumnWidth(0, 110);
 			SetColumnWidth(1, 110);
 			SetColumnWidth(2, 110);
@@ -54,7 +53,6 @@
 		public void Initialize()
 		{
 			Clear();
-			
 			if (CrtSection != null)
 			{
 				CrtSection.Clear();

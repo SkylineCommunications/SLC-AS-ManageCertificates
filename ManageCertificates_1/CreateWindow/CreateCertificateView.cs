@@ -10,20 +10,19 @@
 	internal class CreateCertificateView : Dialog
 	{
 		private const int TextBoxWidth = 320;
-		private const int TextBoxHeight = 100;
 
 		public CreateCertificateView(IEngine engine) : base(engine)
 		{
 			Title = "Create Cert";
 			Width = 400;
-			Height = 700;
 			SetColumnWidth(0, 110);
 			SetColumnWidth(1, 110);
 			SetColumnWidth(2, 110);
 
 			FinishButton = new Button("Finish");
 			CreateButton = new Button("Create");
-			Feedback = new Label() { IsVisible = false };
+			CertificateAuthorities = new DropDown(new[] { "None" }) { Width = TextBoxWidth };
+			Feedback = new Label { IsVisible = false };
 		}
 
 		public DropDown CertificateAuthorities { get; set; }
@@ -56,13 +55,17 @@
 
 		internal Label Feedback { get; set; }
 
-		public void Initialize(Dictionary<string, ICertificate> rootCertificates)
+		public void Initialize(Dictionary<string, ICertificate> certificateAuthorities)
 		{
 			Clear();
 			SetFeedback(string.Empty);
 			int row = 0;
 
-			CertificateAuthorities = new DropDown(rootCertificates.Keys.Prepend("None")) { Width = TextBoxWidth };
+			if (certificateAuthorities.Any())
+			{
+				CertificateAuthorities.Options = certificateAuthorities.Keys.Prepend("None");
+			}
+
 			AddWidget(GetHeader("Choose a Certificate Authority"), row++, 0, 1, 3);
 			AddWidget(CertificateAuthorities, row++, 0, 1, 3);
 

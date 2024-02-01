@@ -4,8 +4,11 @@
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
+	using System.Runtime.ConstrainedExecution;
+	using System.Security.Cryptography.X509Certificates;
 
 	using ManageCertificates_1.Models;
+	using Newtonsoft.Json.Linq;
 
 	using Org.BouncyCastle.Asn1.X509;
 	using Org.BouncyCastle.Crypto;
@@ -15,144 +18,108 @@
 	using Org.BouncyCastle.Math;
 	using Org.BouncyCastle.Pkcs;
 	using Org.BouncyCastle.Security;
+	using Org.BouncyCastle.Utilities;
 	using Org.BouncyCastle.X509;
 
 	using Skyline.DataMiner.Utils.Certificates;
 
 	internal static class CommonActions
 	{
-		internal static void CreateSelfSignedCertificateAuthority(string destination, CertificateModel certificateModel)
-		{
-			var issuer = certificateModel.DistinguishedName;
-			var rootCAPath = $"{destination}\\{certificateModel.CommonName}.p12";
-			var rootCACrtPath = $"{destination}\\{certificateModel.CommonName}.crt";
-			string password = certificateModel.Password; // Set your keystore password here
+		internal const string CaFolderPath = @"C:\Skyline DataMiner\Documents\DMA_COMMON_DOCUMENTS\Certificates\CertificateAuthorities";
+		internal const string ScFolderPath = @"C:\Skyline DataMiner\Documents\DMA_COMMON_DOCUMENTS\Certificates\SignedCertificates";
 
+		internal static void CreateCertificate(Models.CertificateRequest request, Dictionary<string, ICertificate> certAuthorities)
+		{
+			var certFolder = request.IsCertificateAuthority ?
+				$"{CaFolderPath}\\{request.Subject.CommonName}" :
+				$"{ScFolderPath}\\{request.Subject.CommonName}";
+			if (Directory.Exists(certFolder))
+			{
+				throw new ArgumentException($"The directory {certFolder} already exists.");
+			}
+
+			// Generate a new key pair for the certificate
 			var randomGenerator = new CryptoApiRandomGenerator();
 			var random = new SecureRandom(randomGenerator);
-
-			// Generate a new key pair for the Root CA
 			RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
-			generator.Init(new KeyGenerationParameters(new SecureRandom(), certificateModel.KeySize.Value));
+			generator.Init(new KeyGenerationParameters(new SecureRandom(), request.KeySize));
 			var rsaKeyPair = generator.GenerateKeyPair();
 
-			// Create an X.509 certificate generator for the Root CA
+			// Create an X.509 certificate generator
 			X509V3CertificateGenerator certGenerator = new X509V3CertificateGenerator();
 			certGenerator.SetSerialNumber(BigInteger.ProbablePrime(120, new Random()));
-			certGenerator.SetIssuerDN(new X509Name(issuer)); // Issuer's distinguished name
-			certGenerator.SetSubjectDN(new X509Name(issuer)); // Subject's distinguished name
-			certGenerator.SetNotBefore(DateTime.UtcNow.Date); // Certificate validity start date
-			certGenerator.SetNotAfter(DateTime.UtcNow.Date.AddDays(certificateModel.Validity.Value)); // Certificate validity end date
+			certGenerator.SetSubjectDN(new X509Name(request.Subject.Value)); // Subject's distinguished name
+			certGenerator.SetNotBefore(request.ValidFrom.Date); // Certificate validity start date
+			certGenerator.SetNotAfter(request.ValidUntil.Date); // Certificate validity end date
 			certGenerator.SetPublicKey(rsaKeyPair.Public); // Public key of the Root CA
 
-			// Mark as certificate authority
-			certGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(true)); // Mark as CA
-			certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.KeyCertSign)); // Key usage
-			certGenerator.AddExtension(X509Extensions.ExtendedKeyUsage, true, new ExtendedKeyUsage(new[] { KeyPurposeID.IdKPClientAuth, KeyPurposeID.IdKPServerAuth })); // Extended key usage
-
-			// Self-sign
-			ISignatureFactory signatureFactory = new Asn1SignatureFactory("SHA256WITHRSA", rsaKeyPair.Private, random);
-			var certificate = certGenerator.Generate(signatureFactory);
-
-			// Export the rootCA cert to a crt file
-			using (var stream = new StreamWriter(rootCACrtPath))
+			if (request.IsCertificateAuthority)
 			{
-				stream.WriteLine("-----BEGIN CERTIFICATE-----");
-				var data = Convert.ToBase64String(certificate.GetEncoded(), Base64FormattingOptions.InsertLineBreaks);
-				stream.WriteLine(data);
-				stream.WriteLine("-----END CERTIFICATE-----");
+				// Mark as certificate authority
+				certGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(true)); // Mark as CA
+				certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.KeyCertSign)); // Key usage
+				certGenerator.AddExtension(X509Extensions.ExtendedKeyUsage, true, new ExtendedKeyUsage(KeyPurposeID.IdKPClientAuth, KeyPurposeID.IdKPServerAuth)); // Extended key usage
 			}
-
-			// Create a PKCS#12 keystore for the Root CA
-			Pkcs12Store store = new Pkcs12Store();
-			char[] passwordChars = password.ToCharArray();
-			X509CertificateEntry certEntry = new X509CertificateEntry(certificate);
-			store.SetCertificateEntry(certificateModel.CommonName, certEntry);
-			store.SetKeyEntry(certificateModel.CommonName, new AsymmetricKeyEntry(rsaKeyPair.Private), new[] { certEntry });
-
-			// Save the keystore to a file (p12 format)
-			using (FileStream stream = new FileStream(rootCAPath, FileMode.Create, FileAccess.ReadWrite))
+			else
 			{
-				store.Save(stream, passwordChars, new SecureRandom());
-			}
-		}
-
-		internal static void CreateCertificate(string destination, CertificateModel certificateModel, CertificateIssuer certificateIssuer = null)
-		{
-			var subject = certificateModel.DistinguishedName;
-
-			var nodeCrtPath = $"{destination}\\{certificateModel.CertificateName}.crt";
-			var nodeP12Path = $"{destination}\\{certificateModel.CertificateName}.p12";
-			var password = certificateModel.Password;
-
-			var randomGenerator = new CryptoApiRandomGenerator();
-			var random = new SecureRandom(randomGenerator);
-
-			Org.BouncyCastle.X509.X509Certificate certificate;
-
-			// Generate a new key pair for the entity
-			RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
-			generator.Init(new KeyGenerationParameters(new SecureRandom(), certificateModel.KeySize.Value));
-			var rsaKeyPair = generator.GenerateKeyPair();
-
-			// Create a Certificate Signing Request (CSR) for the entity
-			X509V3CertificateGenerator csrGenerator = new X509V3CertificateGenerator();
-			csrGenerator.SetSerialNumber(BigInteger.ProbablePrime(120, new Random()));
-			csrGenerator.SetSubjectDN(new X509Name(subject)); // Subject (Entity)
-			csrGenerator.SetNotBefore(DateTime.UtcNow.Date); // Certificate validity start date
-			csrGenerator.SetNotAfter(DateTime.UtcNow.Date.AddDays(certificateModel.Validity.Value)); // Certificate validity end date
-			csrGenerator.SetPublicKey(rsaKeyPair.Public); // Public key of the entity
-
-			// Add any extensions you need (e.g., BasicConstraints, KeyUsage, ExtendedKeyUsage)
-			csrGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(false)); // Not a CA certificate
-
-			if (!string.IsNullOrEmpty(certificateModel.IPAddress))
-			{
-				csrGenerator.AddExtension(X509Extensions.SubjectAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.IPAddress, certificateModel.IPAddress)));
-			}
-
-			if (certificateModel.DNSNames.Any())
-			{
-				foreach (var dnsName in certificateModel.DNSNames)
+				// Add any extensions you need (e.g., BasicConstraints, KeyUsage, ExtendedKeyUsage)
+				certGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(false)); // Not a CA certificate
+				if (request.IPAddresses != null && request.IPAddresses.Any())
 				{
-					if (!String.IsNullOrEmpty(dnsName))
+					foreach (var ip in request.IPAddresses.Where(n => !string.IsNullOrWhiteSpace(n)))
 					{
-						csrGenerator.AddExtension(X509Extensions.SubjectAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.DnsName, dnsName)));
+						certGenerator.AddExtension(X509Extensions.SubjectAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.IPAddress, ip)));
+					}
+				}
+
+				if (request.DnsNames != null && request.DnsNames.Any())
+				{
+					foreach (var dnsName in request.DnsNames.Where(n => !string.IsNullOrWhiteSpace(n)))
+					{
+						certGenerator.AddExtension(X509Extensions.SubjectAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.DnsName, dnsName)));
 					}
 				}
 			}
 
-			// If Issuer provided
-			if (certificateIssuer != null)
+			// Sign Certificate
+			Org.BouncyCastle.X509.X509Certificate certificate;
+			if (string.IsNullOrWhiteSpace(request.Issuer))
 			{
-				var rootCA = certificateIssuer.Certificate;
-				var rootCAPath = rootCA.P12Path;
-				var rootCAName = GetFileName(rootCAPath);
-
-				// Load the Root CA certificate and private key
-				Pkcs12Store rootCAStore = new Pkcs12Store(new FileStream(rootCAPath, FileMode.Open, FileAccess.Read), certificateIssuer.Password.ToCharArray());
-				X509CertificateEntry rootCACertificateEntry = rootCAStore.GetCertificate(rootCAName);
-				var rootCACertificate = rootCACertificateEntry.Certificate;
-				AsymmetricKeyParameter rootCAPrivateKey = rootCAStore.GetKey(rootCAName).Key;
-				var rootCAKeyEntry = new AsymmetricKeyEntry(rootCAPrivateKey);
-
-				csrGenerator.SetIssuerDN(rootCACertificate.SubjectDN); // Issuer (Root CA)
-
-				// Sign the CSR with the Root CA's private key to generate a signed certificate
-				ISignatureFactory signatureFactory = new Asn1SignatureFactory("SHA256WITHRSA", rootCAPrivateKey, random);
-				certificate = csrGenerator.Generate(signatureFactory);
+				// Self Signed
+				certGenerator.SetIssuerDN(new X509Name(request.Subject.Value));
+				ISignatureFactory selfSignedFactory = new Asn1SignatureFactory("SHA256WITHRSA", rsaKeyPair.Private, random);
+				certificate = certGenerator.Generate(selfSignedFactory);
 			}
 			else
 			{
-				csrGenerator.SetIssuerDN(new X509Name(subject)); // Issuer (Root CA)
+				if (!certAuthorities.ContainsKey(request.Issuer))
+				{
+					throw new ArgumentException($"The issuer {request.Issuer} can not be found");
+				}
+
+				var certAuthority = certAuthorities[request.Issuer];
+				if (!TryCertificatePassword(certAuthority.P12Path, request.IssuerPassword))
+				{
+					throw new ArgumentException("Password provided for CA p12 file is wrong.");
+				}
+
+				// Load the CA certificate and private key
+				Pkcs12Store rootCAStore = new Pkcs12Store(new FileStream(certAuthority.P12Path, FileMode.Open, FileAccess.Read), request.IssuerPassword.ToCharArray());
+				X509CertificateEntry rootCACertificateEntry = rootCAStore.GetCertificate(certAuthority.Subject.CommonName);
+				var rootCACertificate = rootCACertificateEntry.Certificate;
+				AsymmetricKeyParameter rootCAPrivateKey = rootCAStore.GetKey(certAuthority.Subject.CommonName).Key;
+				certGenerator.SetIssuerDN(rootCACertificate.SubjectDN); // Issuer (Root CA)
 
 				// Sign the CSR with the Root CA's private key to generate a signed certificate
-				ISignatureFactory signatureFactory = new Asn1SignatureFactory("SHA256WITHRSA", rsaKeyPair.Private, random);
-				certificate = csrGenerator.Generate(signatureFactory);
+				ISignatureFactory signatureFactory = new Asn1SignatureFactory("SHA256WITHRSA", rootCAPrivateKey, random);
+				certificate = certGenerator.Generate(signatureFactory);
 			}
 
 			// Export the cert to a crt file
-			using (var stream = new StreamWriter(nodeCrtPath))
+			Directory.CreateDirectory(certFolder);
+			var keyStorePath = $"{certFolder}\\{request.Subject.CommonName}.p12";
+			var crtPath = $"{certFolder}\\{request.Subject.CommonName}.crt";
+			using (var stream = new StreamWriter(crtPath))
 			{
 				stream.WriteLine("-----BEGIN CERTIFICATE-----");
 				var data = Convert.ToBase64String(certificate.GetEncoded(), Base64FormattingOptions.InsertLineBreaks);
@@ -160,24 +127,28 @@
 				stream.WriteLine("-----END CERTIFICATE-----");
 			}
 
-			// Create a PKCS#12 keystore for the Root CA
+			// Create a PKCS#12 keystore
 			Pkcs12Store store = new Pkcs12Store();
-			char[] passwordChars = password.ToCharArray();
+			char[] passwordChars = request.Password.ToCharArray();
 			X509CertificateEntry certEntry = new X509CertificateEntry(certificate);
-			store.SetCertificateEntry(certificateModel.CommonName, certEntry);
-			store.SetKeyEntry(certificateModel.CommonName, new AsymmetricKeyEntry(rsaKeyPair.Private), new[] { certEntry });
+			store.SetCertificateEntry(request.Subject.CommonName, certEntry);
+			store.SetKeyEntry(request.Subject.CommonName, new AsymmetricKeyEntry(rsaKeyPair.Private), new[] { certEntry });
 
 			// Save the keystore to a file (p12 format)
-			using (FileStream stream = new FileStream(nodeP12Path, FileMode.Create, FileAccess.ReadWrite))
+			using (FileStream stream = new FileStream(keyStorePath, FileMode.Create, FileAccess.ReadWrite))
 			{
 				store.Save(stream, passwordChars, new SecureRandom());
 			}
 		}
 
-		internal static Dictionary<string, ICertificate> GetRootCertificates(string folderPath)
+		/// <summary>
+		/// Get the certificates from a specific folder.
+		/// </summary>
+		/// <returns>A dictionary with as key the folder location and as value the ICertificate object.</returns>
+		internal static Dictionary<string, ICertificate> GetCertificateAuthorities()
 		{
 			var certificates = new Dictionary<string, ICertificate>();
-			foreach (string folder in Directory.GetDirectories(folderPath))
+			foreach (string folder in Directory.GetDirectories(CaFolderPath))
 			{
 				var crt = Directory.GetFiles(folder).First(x => x.EndsWith(".crt"));
 				var p12 = Directory.GetFiles(folder).First(x => x.EndsWith(".p12"));
@@ -194,7 +165,6 @@
 			try
 			{
 				Pkcs12Store certStore = new Pkcs12Store(new FileStream(p12Path, FileMode.Open, FileAccess.Read), password.ToCharArray());
-
 				return true;
 			}
 			catch (IOException)

@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.IO;
 	using System.Linq;
 	using System.Text.RegularExpressions;
 
@@ -14,35 +13,28 @@
 
 	internal class CreateCertificateController
 	{
-		private readonly CreateCertificateView view;
 		private readonly IEngine engine;
-		private readonly string caFolderPath;
-		private readonly string scFolderPath;
 		private readonly CertificateClusterModel model;
-		private Dictionary<string, ICertificate> rootCertificates;
 		private readonly Regex passwordRegex = new Regex("[A-Za-z0-9]{6,}", RegexOptions.IgnoreCase);
+		private readonly CreateCertificateView view;
+		private Dictionary<string, ICertificate> certAuthorities;
 
-		public CreateCertificateController(IEngine engine, CreateCertificateView view, string caFolderPath, string scFolderPath, CertificateClusterModel model)
+		public CreateCertificateController(IEngine engine, CreateCertificateView view, CertificateClusterModel model)
 		{
 			this.view = view;
 			this.engine = engine;
 			this.model = model;
-			this.caFolderPath = caFolderPath;
-			this.scFolderPath = scFolderPath;
 			view.FinishButton.Pressed += OnFinishButtonPressed;
 			view.CreateButton.Pressed += OnCreateButtonPressed;
+			view.CertificateAuthorities.Changed += OnCertificateAuthorityChanged;
 		}
 
 		internal event EventHandler<EventArgs> Finish;
 
 		public void Initialize()
 		{
-			
-			rootCertificates = CommonActions.GetRootCertificates(caFolderPath).ToDictionary(x => GetFolderName(x.Key), x => x.Value);
-
-			view.Initialize(rootCertificates);
-			view.CertificateAuthorities.Changed += OnCertificateAuthorityChanged;
-
+			certAuthorities = CommonActions.GetCertificateAuthorities().ToDictionary(x => x.Value.Subject.CommonName, x => x.Value);
+			view.Initialize(certAuthorities);
 			FillInputs();
 		}
 
@@ -51,93 +43,51 @@
 			FillInputs();
 		}
 
-		public void OnFinishButtonPressed(object sender, EventArgs e)
-		{
-			Finish?.Invoke(this, EventArgs.Empty);
-		}
-
 		public void OnCreateButtonPressed(object sender, EventArgs e)
 		{
-			var commonName = view.CommonName.Text;
-			var organization = view.Organization.Text;
-			var organizationalUnit = view.OrganizationalUnit.Text;
-			var country = view.Country.Text;
-			var validity = Convert.ToInt32(view.Validity.Text);
-			var keySize = Convert.ToInt32(view.KeySize.Text);
-			var password = view.Password.Password;
-			var ipAddress = view.IPAddress.Text;
-			var dnsNames = view.DNSNames.Text.Split(' ');
-			var certificateName = view.CertificateName.Text;
-			var certificateInfo = new CertificateModel(commonName, organization, organizationalUnit, country, validity, keySize, password, ipAddress, dnsNames, certificateName);
-
-			if (Directory.Exists(scFolderPath + $"\\{commonName}"))
+			var certRequest = new CertificateRequest
 			{
-				view.SetFeedback("Cert already exists, please delete the existing one before creating a new one.");
-				return;
-			}
+				IsCertificateAuthority = false,
+				Subject = DistinguishedName.GetDistinguishedName(
+					view.CommonName.Text,
+					view.Organization.Text,
+					view.OrganizationalUnit.Text,
+					view.Country.Text),
+				DnsNames = null,
+				IPAddresses = null,
+				KeySize = Convert.ToInt32(view.KeySize.Text),
+				Password = view.Password.Password,
+				ValidFrom = DateTime.Now,
+				ValidUntil = DateTime.Now.AddDays(Convert.ToInt32(view.Validity.Text)),
+			};
 
-			if (!passwordRegex.IsMatch(password))
+			if (!passwordRegex.IsMatch(certRequest.Password))
 			{
 				view.SetFeedback("Password should be alphanumeric and contain at least 6 characters.");
 				return;
 			}
 
-			if (view.CertificateAuthorities.Selected.Equals("None"))
+			if (!view.CertificateAuthorities.Selected.Equals("None"))
 			{
-				CreateCert(certificateInfo);
-			}
-			else
-			{
-				var certificateIssuer = new CertificateIssuer(rootCertificates[view.CertificateAuthorities.Selected], view.CAPassword.Password);
-
-				CreateCert(certificateInfo, certificateIssuer);
-			}
-		}
-
-		private bool CreateCert(CertificateModel certificateModel)
-		{
-			try
-			{
-				var this_folder = scFolderPath + $"\\{view.CertificateName.Text}";
-				Directory.CreateDirectory(this_folder);
-
-				CommonActions.CreateCertificate(this_folder, certificateModel);
-
-				view.SetFeedback("Signed certificate successfully created.");
-				return true;
-			}
-			catch (Exception e)
-			{
-				engine.GenerateInformation("failed because of: " + e);
-				view.SetFeedback("Failed to create CA.");
-				return false;
-			}
-		}
-
-		private bool CreateCert(CertificateModel certificateModel, CertificateIssuer certificateIssuer)
-		{
-			if (!CommonActions.TryCertificatePassword(certificateIssuer.Certificate.P12Path, certificateIssuer.Password))
-			{
-				view.SetFeedback("Password provided for CA p12 file is wrong.");
-				return false;
+				certRequest.Issuer = view.CertificateAuthorities.Selected;
+				certRequest.IssuerPassword = view.CAPassword.Password;
 			}
 
 			try
 			{
-				var this_folder = scFolderPath + $"\\{view.CertificateName.Text}";
-				Directory.CreateDirectory(this_folder);
-
-				CommonActions.CreateCertificate(this_folder, certificateModel, certificateIssuer);
-
-				view.SetFeedback("CA successfully created.");
-				return true;
+				CommonActions.CreateCertificate(certRequest, certAuthorities);
+				view.SetFeedback("Certificate successfully created.");
 			}
-			catch (Exception e)
+			catch (Exception ex)
 			{
-				engine.GenerateInformation("failed because of: " + e);
-				view.SetFeedback("Failed to create CA.");
-				return false;
+				engine.GenerateInformation("Exception: " + ex);
+				view.SetFeedback(ex.Message);
 			}
+		}
+
+		public void OnFinishButtonPressed(object sender, EventArgs e)
+		{
+			Finish?.Invoke(this, EventArgs.Empty);
 		}
 
 		private void FillInputs()
@@ -147,16 +97,24 @@
 			if (rootCA != "None")
 			{
 				view.CAPassword.IsEnabled = true;
-				view.OrganizationalUnit.Text = rootCertificates[rootCA].CertificateInfo.OrganizationalUnit;
-				view.Organization.Text = rootCertificates[rootCA].CertificateInfo.Organization;
-				view.Country.Text = rootCertificates[rootCA].CertificateInfo.Country;
+				view.OrganizationalUnit.Text = certAuthorities[rootCA].Subject.OrganizationalUnitName;
+				view.Organization.Text = certAuthorities[rootCA].Subject.OrganizationName;
+				view.Country.Text = certAuthorities[rootCA].Subject.CountryName;
+				if (certAuthorities.ContainsKey(rootCA) && certAuthorities[rootCA].Issuer == certAuthorities[rootCA].Subject)
+				{
+					view.SetFeedback("It is NOT advised to create certificates signed directly by the root CA.Please select a CA that is not self-signed.You can do this by creating a CA signed by the root CA");
+				}
+				else
+				{
+					view.SetFeedback(string.Empty);
+				}
 			}
 			else
 			{
 				view.CAPassword.IsEnabled = false;
-				view.OrganizationalUnit.Text = string.Empty;
-				view.Organization.Text = string.Empty;
-				view.Country.Text = string.Empty;
+				view.OrganizationalUnit.Text = string.IsNullOrEmpty(model.OrganizationalUnit) ? string.Empty : model.OrganizationalUnit;
+				view.Organization.Text = string.IsNullOrEmpty(model.Organization) ? string.Empty : model.Organization;
+				view.Country.Text = string.IsNullOrEmpty(model.Country) ? string.Empty : model.Country;
 			}
 
 			view.CommonName.Text = model.CommonName;

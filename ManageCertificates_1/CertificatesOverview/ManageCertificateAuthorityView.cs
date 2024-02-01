@@ -10,17 +10,19 @@
 
 	internal class ManageCertificateAuthorityView : Dialog
 	{
-		private readonly string[] headers = { "CA Name", "DistinguishedName", "Validity" };
+		private readonly string[] headers = { "CA CN", "DN", "Validity", "Issuer" };
+		private IEngine engine;
 
 		public ManageCertificateAuthorityView(IEngine engine) : base(engine)
 		{
 			Title = "Manage Certificates";
-			Width = 700;
-			Height = 450;
+			this.engine = engine;
+			Width = 900;
 			SetColumnWidth(0, 50);
-			SetColumnWidth(1, 220);
-			SetColumnWidth(2, 160);
-			SetColumnWidth(3, 220);
+			SetColumnWidth(1, 160);
+			SetColumnWidth(2, 260);
+			SetColumnWidth(3, 160);
+			SetColumnWidth(4, 260);
 
 			FinishButton = new Button("Finish");
 			Certificates = new TableSelection(engine, headers);
@@ -44,22 +46,14 @@
 			Clear();
 			int row = 0;
 
-			if (Certificates != null)
-			{
-				Certificates.Clear();
-			}
-
 			// First Column
 			var tableRows = GetTableRows(certificates);
-			Certificates.Initialize(tableRows);
-			AddSection(Certificates, row, 0);
-			row += Certificates.RowCount;
-
+			Certificates.AddToDialog(this, tableRows, ref row);
+			AddWidget(CreateButton, row++, 4, 1, 1, HorizontalAlignment.Right);
+			AddWidget(new Label(string.Empty), row++, 0);
 			AddWidget(DeleteButton, row, 1);
 			AddWidget(TrustButton, row, 2);
-			AddWidget(CreateButton, row++, 3, 1, 1, HorizontalAlignment.Right);
-			AddWidget(new Label(string.Empty), row++, 0);
-			AddWidget(FinishButton, row, 3, 1, 1, HorizontalAlignment.Right);
+			AddWidget(FinishButton, row, 4, 1, 1, HorizontalAlignment.Right);
 		}
 
 		internal IEnumerable<string> GetSelectedCertificates()
@@ -67,16 +61,17 @@
 			return Certificates.Selected;
 		}
 
-		private Dictionary<string, Widget[]> GetTableRows(Dictionary<string, ICertificate> certificates)
+		private static Dictionary<string, Widget[]> GetTableRows(Dictionary<string, ICertificate> certificates)
 		{
 			Dictionary<string, Widget[]> tableRows = new Dictionary<string, Widget[]>();
 			foreach (var certificate in certificates)
 			{
 				tableRows[certificate.Key] = new Widget[]
 				{
-					new Label(CommonActions.GetFolderName(certificate.Key)),
-					new Label(certificate.Value.CertificateInfo.DistinguishedName),
-					new Label(certificate.Value.CertificateFile.NotAfter.ToString()),
+					new Label(certificate.Value.Subject.CommonName){ Width = 150 },
+					new Label(certificate.Value.Subject.Value) {Width = 250},
+					new Label(certificate.Value.CertificateFile.NotAfter.ToString("dd MMM yyyy")){ Width = 150 },
+					new Label(certificate.Value.Subject == certificate.Value.Issuer ? "Self-Signed" : certificate.Value.Issuer.Value) { Width = 250 },
 				};
 			}
 

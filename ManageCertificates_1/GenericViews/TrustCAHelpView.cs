@@ -14,7 +14,7 @@
 			this.HelpText = new TextBox();
 			this.HelpText.IsMultiline = true;
 			this.HelpText.Height = 320;
-			this.HelpText.Width = 500;
+			this.HelpText.Width = 880;
 			this.HelpText.Text =
 				"NOTE: You are now adding a Certificate as a Trusted Root Certificate Authority. Only do this if the certificate comes from a recognized source and is trustable." + Environment.NewLine +
 				"1. Navigate to C:\\Skyline DataMiner\\Documents\\DMA_COMMON_DOCUMENTS\\Certificates\\CertificateAuthorities on the DataMiner server." + Environment.NewLine +

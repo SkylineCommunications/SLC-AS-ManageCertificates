@@ -32,30 +32,26 @@ namespace ManageCertificates_1
 			engine.FindInteractiveClient("Launching Certificate Manager", 100, "user:" + engine.UserLoginName, AutomationScriptAttachOptions.AttachImmediately);
 			controller = new InteractiveController(engine);
 			engine.Timeout = new TimeSpan(1, 0, 0);
-
-			string caFolderPath = @"C:\Skyline DataMiner\Documents\DMA_COMMON_DOCUMENTS\Certificates\CertificateAuthorities";
-			string scFolderPath = @"C:\Skyline DataMiner\Documents\DMA_COMMON_DOCUMENTS\Certificates\SignedCertificates";
-
 			CertificateClusterModel model = GetCertInfoModelFromInput(engine.GetScriptParam("Input").Value);
 
 			try
 			{
-				Directory.CreateDirectory(caFolderPath);
-				Directory.CreateDirectory(scFolderPath);
+				Directory.CreateDirectory(CommonActions.CaFolderPath);
+				Directory.CreateDirectory(CommonActions.ScFolderPath);
 				ManageCertificateView manageCertificateView = new ManageCertificateView(engine);
-				ManageCertificateController manageCertificateController = new ManageCertificateController(engine, manageCertificateView, scFolderPath);
+				ManageCertificateController manageCertificateController = new ManageCertificateController(engine, manageCertificateView);
 				ManageCertificateAuthorityView manageCertificateAuthorityView = new ManageCertificateAuthorityView(engine);
-				ManageCertificateAuthorityController manageCertificateAuthorityController = new ManageCertificateAuthorityController(engine, manageCertificateAuthorityView, caFolderPath);
+				ManageCertificateAuthorityController manageCertificateAuthorityController = new ManageCertificateAuthorityController(engine, manageCertificateAuthorityView);
 				CertificateManagerMenuView certificateManagerMenuView = new CertificateManagerMenuView(engine);
 				CertificateManagerMenuController certificateManagerMenuController = new CertificateManagerMenuController(engine, certificateManagerMenuView);
 
 				CreateCertificateAuthorityView createCertificateAuthorityView = new CreateCertificateAuthorityView(engine);
-				CreateCertificateAuthorityController createCertificateAuthorityController = new CreateCertificateAuthorityController(engine, createCertificateAuthorityView, caFolderPath, model);
+				CreateCertificateAuthorityController createCertificateAuthorityController = new CreateCertificateAuthorityController(engine, createCertificateAuthorityView, model);
 				CreateCertificateView createCertificateView = new CreateCertificateView(engine);
-				CreateCertificateController createCertificateController = new CreateCertificateController(engine, createCertificateView, caFolderPath, scFolderPath, model);
+				CreateCertificateController createCertificateController = new CreateCertificateController(engine, createCertificateView, model);
 
 				UploadView uploadView = new UploadView(engine);
-				UploadController uploadController = new UploadController(engine, uploadView, caFolderPath, scFolderPath);
+				UploadController uploadController = new UploadController(engine, uploadView);
 
 				certificateManagerMenuController.Initialize();
 
