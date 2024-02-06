@@ -21,6 +21,8 @@
 	using Org.BouncyCastle.Utilities;
 	using Org.BouncyCastle.X509;
 
+	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Utils.Certificates;
 
 	internal static class CommonActions
@@ -186,6 +188,12 @@
 			var startIndex = s.LastIndexOf('\\') + 1;
 
 			return s.Substring(startIndex);
+		}
+
+		internal static void DeleteDmDocFolder(string path)
+		{
+			var msg = new DeleteDocumentFolderMessage(path);
+			Engine.SLNet.SendMessage(msg);
 		}
 	}
 }

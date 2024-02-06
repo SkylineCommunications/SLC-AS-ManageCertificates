@@ -27,7 +27,7 @@
 			SetColumnWidth(4, 260);
 
 			FinishButton = new Button("Finish");
-			Certificates = new TableSelection(engine, headers);
+			Certificates = new TableSelection(headers);
 			DeleteButton = new Button("Delete");
 			TrustButton = new Button("Trust CA...");
 			CreateButton = new Button("Create New CA...") { Width = 180 };

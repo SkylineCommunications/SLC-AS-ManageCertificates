@@ -9,13 +9,11 @@
 
 	internal class TableSelection
 	{
-		private readonly IEngine engine;
 		private readonly string[] columns;
 		private Dictionary<string, bool> rowStatus;
 
-		public TableSelection(IEngine engine, string[] columns)
+		public TableSelection(string[] columns)
 		{
-			this.engine = engine;
 			this.columns = columns;
 		}
 
@@ -53,16 +51,9 @@
 
 		private void OnCheck(object sender, EventArgs e)
 		{
-			engine.GenerateInformation("Triggered CheckBox");
 			var checkbox = sender as CheckBox;
-			if (checkbox != null)
-			{
-				engine.GenerateInformation($"CheckBox not null");
-			}
-
 			if (checkbox != null && rowStatus.ContainsKey(checkbox.Tooltip))
 			{
-				engine.GenerateInformation($"CheckBox: {checkbox.Tooltip}");
 				rowStatus[checkbox.Tooltip] = checkbox.IsChecked;
 			}
 		}

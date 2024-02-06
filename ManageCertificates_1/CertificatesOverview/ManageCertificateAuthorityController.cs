@@ -57,8 +57,7 @@
 			foreach (var folder in folders)
 			{
 				engine.GenerateInformation($"Deleting {folder}");
-				var dir = new DirectoryInfo(folder);
-				dir.Delete(true);
+				CommonActions.DeleteDmDocFolder(folder);
 			}
 
 			Initialize();
