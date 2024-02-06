@@ -109,7 +109,7 @@ namespace ManageInstallPackages_1.CreateWindow
 
 			AddWidget(GetHeader("---Extensions---"), row++, 0, 1, 3);
 			IPAddress = GetTextBox();
-			AddWidget(GetHeader("IP Address (optional)"), row++, 0, 1, 3);
+			AddWidget(GetHeader("IP Address (space separated, optional)"), row++, 0, 1, 3);
 			AddWidget(IPAddress, row++, 0, 1, 3);
 
 			DnsNames = GetTextBox();
